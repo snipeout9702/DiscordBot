@@ -56,20 +56,18 @@ namespace DiscordBot
                     Log("[PING]...[PONG]");
                 });
             // Send a message to the entire server
-            CService.CreateCommand("Broadcast")
-                .Alias("bc", "BC", "Announce")
+            #region BroadcastCommand
+            CService.CreateCommand("broadcast")
+                .Alias("Broadcast", "bc", "BC", "Announce")
                 .Description("Broadcast/Announce something to all channels")
                 .Parameter("Message", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    for (int i = 0; i < e.User.Roles.ToArray().Length; i++)
+                    // If the user is not an admin the alert them to the matter and deny them access
+                    if (!isAdmin(e.User))
                     {
-                        var rank = e.User.Roles.ToArray()[i].ToString();
-                        Log($"User rank[{i}]: {rank}");
-                        if (rank != "Admin" && rank != "Owner" && rank != "Co-Owner" && rank != "Developer")
-                        {
-                            await e.Channel.SendMessage($"@{e.User} You do not have access to that command!");
-                        }
+                        await e.Channel.SendMessage($"@{e.User.Name} You do not have access to that command!");
+                        return;
                     }
                     //Console.WriteLine($"Broadcasting: \"{e.Args[0]}\" to channel: \"{e.Channel.Name}\"");
                     //await e.Channel.SendMessage($"[BROADCAST] {e.Args[0]}");
@@ -79,6 +77,23 @@ namespace DiscordBot
                         await ch.SendMessage($"[BROADCAST] {e.Args[0]}");
                         Log($"[BROADCASTING] {e.Args[0]} to channel: {ch.Name}");
                     }
+                });
+            #endregion
+            // TODO:
+            //  +Make warnings save >> Have an action after 3
+            CService.CreateCommand("warn")
+                .Description("Applies a warning to the users name, 3 strikes and they're out!")
+                .Parameter("Target", ParameterType.Required)
+                .Parameter("Reason", ParameterType.Optional)
+                .Do(async (e) => 
+                {
+                    var Username = e.Args[0];
+                    var Reason = "No reason supplied";
+                    if (e.Args[1]!= null)
+                    {
+                        Reason = e.Args[1];
+                    }
+                    await e.Channel.SendMessage($"@{Username} You have been warned for: {Reason}");
                 });
         }
 
@@ -91,6 +106,27 @@ namespace DiscordBot
         public void Log(string Message)
         {
             Console.WriteLine(Message);
+        }
+
+        // Perform a check to see if the user is illegable to run certian admin commands
+        // May require a seperate function for mod commands later on, for now this is fine.
+        public bool isAdmin(User user)
+        {
+            string[] AccessRoles = { "Admin", "Co-Owner", "Owner", "Developer" };
+            Role[] Roles = user.Roles.ToArray();
+            // For every role see if it is in the AccessRoles
+            for (int i = 0; i < Roles.Length; i++)
+            {
+                for (int x = 0; x < AccessRoles.Length; x++)
+                {
+                    if (AccessRoles[x] == Roles[i].ToString())
+                    {
+                        return true;
+                    }
+                }
+            }
+            // If i!=x not admin
+            return false;
         }
     }
 }
