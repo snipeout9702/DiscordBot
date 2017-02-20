@@ -53,9 +53,21 @@ namespace DiscordBot
                 {
                     await e.Channel.SendMessage("pong");
                 });
-            CService.CreateCommand("Google")
-                .Alias("g", "G")
-                .Description("Do a Google search for something");
+            CService.CreateCommand("Broadcast")
+                .Alias("bc", "BC", "Announce")
+                .Description("Broadcast/Announce something to all channels")
+                .Parameter("Message", ParameterType.Required)
+                .Do(async (e) =>
+                {
+                    //Console.WriteLine($"Broadcasting: \"{e.Args[0]}\" to channel: \"{e.Channel.Name}\"");
+                    //await e.Channel.SendMessage($"[BROADCAST] {e.Args[0]}");
+                    for (int i = 0; i < e.Server.ChannelCount; i++)
+                    {
+                        var ch = e.Server.TextChannels.ToArray()[i];
+                        await ch.SendMessage($"[BROADCAST] {e.Args[0]}");
+                        Console.WriteLine($"[BROADCASTING] {e.Args[0]} to channel: {ch.Name}");
+                    }
+                });
         }
 
         // Write to console the required log info
